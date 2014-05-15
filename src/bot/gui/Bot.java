@@ -29,7 +29,8 @@ public final class Bot extends javax.swing.JFrame {
         jTable1.setModel(chatModel);
         setColumnsWidth();
         
-        generator = new Generator("Generator1.txt");
+        generator = new Generator();
+        generator.init("Generator1.txt");
     }
 
     /**

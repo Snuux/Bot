@@ -19,11 +19,12 @@ import java.util.logging.Logger;
  */
 public class Generator {
     ArrayList<MessageData> messages;
-    
-    
-    public Generator(String name) {
+
+    public Generator() {
         messages = new ArrayList();
-        
+    }
+    
+    public void init(String name){
         try {
             loadFile(name);
         } catch (Exception ex) {
@@ -46,13 +47,13 @@ public class Generator {
     private void loadMessageData(String line){
         String[] blocks = line.split(" // ");
         String[] words;
-        words = blocks[0].split("(?<=\\d)[ ]+|([ ]=.*?)");
+        words = blocks[0].split("( =)|(= )|(=)");
         MessageData t = new MessageData();
         for (int i = 0; i < words.length; i += 2){
             t.addMessageData(words[i], Integer.parseInt(words[i+1]), true);
         }
         
-        words = blocks[1].split("(?<=\\d)[ ]+|([ ]=.*?)");
+        words = blocks[1].split("( =)|(= )|(=)");
         for (int i = 0; i < words.length; i += 2){
             t.addMessageData(words[i], Integer.parseInt(words[i+1]), false);
         }
@@ -68,6 +69,6 @@ public class Generator {
                 }
         }
         
-        return "Я ещё глупый(( Хз как ответить...";
+        return "...";
     }
 }
