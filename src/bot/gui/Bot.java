@@ -3,32 +3,47 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package bot.gui;
 
 import bot.ai.Generator;
 import static java.awt.event.KeyEvent.VK_ENTER;
+import static java.awt.event.KeyEvent.VK_SHIFT;
+import javax.swing.JTable;
+import javax.swing.Timer;
 import javax.swing.table.TableColumn;
 
 /**
  *
  * @author Вадим
  */
-public final class Bot extends javax.swing.JFrame {  
+public final class Bot extends javax.swing.JFrame {
+
     private static ChatTableModel chatModel;
-    
+
     public static Generator generator;  //генератор ответов
     public static int rating = 50;      //"настроение" бота
-    
+
+    boolean shiftPressed = false;
+    int enterCount = 1;
+
+    Timer t1, t2;
+    boolean canPrint;
+
     /**
      * Creates new form Bot
      */
     public Bot() {
         initComponents();
+
         chatModel = new ChatTableModel();
         jTable1.setModel(chatModel);
+        jTable1.setDefaultRenderer(Object.class, ChatTableModel.multiLineCellRenderer);
+        jTable1.setRowHeight(25);
+        jTable1.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         setColumnsWidth();
-        
+
+        canPrint = true;
+
         generator = new Generator();
         generator.init("Generator1.txt");
     }
@@ -54,6 +69,7 @@ public final class Bot extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(400, 400));
@@ -90,7 +106,6 @@ public final class Bot extends javax.swing.JFrame {
         ));
         jScrollPane3.setViewportView(jTable1);
 
-        jSlider1.setValue(50);
         jSlider1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         jSlider1.setEnabled(false);
         jSlider1.setFocusable(false);
@@ -145,9 +160,10 @@ public final class Bot extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(14, 14, 14)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane3)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 481, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel4)
@@ -158,7 +174,7 @@ public final class Bot extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 386, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton1)))
                 .addContainerGap())
@@ -173,7 +189,8 @@ public final class Bot extends javax.swing.JFrame {
                     .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel4))
+                        .addComponent(jLabel4)
+                        .addComponent(jLabel5))
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addComponent(jSlider1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
@@ -192,32 +209,50 @@ public final class Bot extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jTextArea1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextArea1KeyPressed
-        if (evt.getKeyCode() == VK_ENTER){
-            pushMessage();
-            jTextArea1.setText("");
+        if (evt.getKeyCode() == VK_SHIFT) {
+            shiftPressed = true;
+        }
+        if (evt.getKeyCode() == VK_ENTER) {
+            if (!shiftPressed) {
+                pushMessage();
+                jTable1.setRowHeight(jTable1.getRowCount() - 2, 25 * enterCount);
+                System.out.println(jTable1.getRowCount());
+                jTextArea1.setText("");
+                //enterCount = 1; //тут мы раздвигаем ячейку, если есть дополнительные строчки
+            } else {
+                //enterCount++;
+                jTextArea1.append("\n");
+            }
         }
     }//GEN-LAST:event_jTextArea1KeyPressed
 
     private void jTextArea1KeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextArea1KeyReleased
-        if (evt.getKeyCode() == VK_ENTER){
+        if (evt.getKeyCode() == VK_ENTER && !shiftPressed) {
             jTextArea1.setText("");
         }
+        if (evt.getKeyCode() == VK_SHIFT) {
+            shiftPressed = false;
+        }
     }//GEN-LAST:event_jTextArea1KeyReleased
-    
+
     //вызывается при отправке сообщения
-    private void pushMessage(){
-        if (!jTextArea1.getText().isEmpty()){ //если пользователь что-то ввел
+    private void pushMessage() {
+        if (!jTextArea1.getText().isEmpty() && canPrint) { //если пользователь что-то ввел
             chatModel.messages.add(new UserMessage(jTextArea1.getText())); //добавляем в таблицу сообщения
+            //Timer
+            //jLabel5.setText("Печатаю...");
+            //Timer
             chatModel.messages.add(new BotMessage(jTextArea1.getText()));
-            
+
             jTextArea1.setText("");                     //обновляем поле ввода
             chatModel.fireTableDataChanged();           //обновляем таблицу
             jSlider1.setValue(rating);                  //обновляет "настроение"
             jLabel4.setText(Integer.toString(rating));  //
+            //
         }
     }
-    
-    private void setColumnsWidth(){
+
+    private void setColumnsWidth() {
         TableColumn column = null;
         for (int i = 0; i < 3; i++) {
             column = jTable1.getColumnModel().getColumn(i);
@@ -228,7 +263,7 @@ public final class Bot extends javax.swing.JFrame {
             }
         }
     }
-    
+
     /**
      * @param args the command line arguments
      */
@@ -270,6 +305,7 @@ public final class Bot extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane2;
