@@ -38,17 +38,12 @@ public class MessageData {
     }
     
     private void changeRating(int r){
-        if (r < 5){
-            rating += 10-5/2;
-        } 
-        else if (r > 5){
-            rating -= 10-5/2;
-        }
+        rating += r*6;
         
         if (rating < 0)
             rating = 0;
         else if (rating > 100)
-            rating = 100;        
+            rating = 100;
     }
 
     /**

@@ -15,7 +15,12 @@ public class BotMessage extends Message{
         super();
         text = "";
         text = Bot.generator.getAnswer(prev);
-        name = "Bot";        
+        name = "Bot";  
+        
+        if (prev == "11/11")
+            text = "меня зовут Bot. Ты можешь со мной пообщаться";
+        else if (prev == "22/22")
+            text = "только пиши с маленькой буквы! А то я не очень понимаю большие";
     }
     
 }

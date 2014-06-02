@@ -6,8 +6,13 @@
 package bot.gui;
 
 import bot.ai.Generator;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import static java.awt.event.KeyEvent.VK_ENTER;
-import static java.awt.event.KeyEvent.VK_SHIFT;
+import java.util.Random;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.Timer;
 import javax.swing.table.TableColumn;
@@ -23,12 +28,11 @@ public final class Bot extends javax.swing.JFrame {
     public static Generator generator;  //генератор ответов
     public static int rating = 50;      //"настроение" бота
 
-    boolean shiftPressed = false;
-    int enterCount = 1;
-
-    Timer t1, t2;
+    String currentText;
+    
+    Timer t1;
     boolean canPrint;
-
+    
     /**
      * Creates new form Bot
      */
@@ -37,15 +41,17 @@ public final class Bot extends javax.swing.JFrame {
 
         chatModel = new ChatTableModel();
         jTable1.setModel(chatModel);
-        jTable1.setDefaultRenderer(Object.class, ChatTableModel.multiLineCellRenderer);
-        jTable1.setRowHeight(25);
         jTable1.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         setColumnsWidth();
 
         canPrint = true;
 
         generator = new Generator();
-        generator.init("Generator1.txt");
+        
+        chatModel.messages.add(new BotMessage("11/11")); //стартовые сообщения
+        chatModel.messages.add(new BotMessage("22/22"));
+        chatModel.fireTableDataChanged();
+        
     }
 
     /**
@@ -72,16 +78,16 @@ public final class Bot extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new java.awt.Dimension(400, 400));
+        setMaximumSize(new java.awt.Dimension(102400, 102500));
+        setMinimumSize(new java.awt.Dimension(630, 500));
+        setPreferredSize(new java.awt.Dimension(630, 500));
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
+        jTextArea1.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         jTextArea1.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 jTextArea1KeyPressed(evt);
-            }
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                jTextArea1KeyReleased(evt);
             }
         });
         jScrollPane2.setViewportView(jTextArea1);
@@ -160,7 +166,7 @@ public final class Bot extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(14, 14, 14)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 481, Short.MAX_VALUE)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 582, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -174,7 +180,7 @@ public final class Bot extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 386, Short.MAX_VALUE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton1)))
                 .addContainerGap())
@@ -209,46 +215,72 @@ public final class Bot extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jTextArea1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextArea1KeyPressed
-        if (evt.getKeyCode() == VK_SHIFT) {
-            shiftPressed = true;
-        }
-        if (evt.getKeyCode() == VK_ENTER) {
-            if (!shiftPressed) {
-                pushMessage();
-                jTable1.setRowHeight(jTable1.getRowCount() - 2, 25 * enterCount);
-                System.out.println(jTable1.getRowCount());
-                jTextArea1.setText("");
-                //enterCount = 1; //тут мы раздвигаем ячейку, если есть дополнительные строчки
-            } else {
-                //enterCount++;
-                jTextArea1.append("\n");
-            }
+        if (evt.getKeyChar() == VK_ENTER) {
+            pushMessage();
+            evt.consume();
         }
     }//GEN-LAST:event_jTextArea1KeyPressed
-
-    private void jTextArea1KeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextArea1KeyReleased
-        if (evt.getKeyCode() == VK_ENTER && !shiftPressed) {
-            jTextArea1.setText("");
-        }
-        if (evt.getKeyCode() == VK_SHIFT) {
-            shiftPressed = false;
-        }
-    }//GEN-LAST:event_jTextArea1KeyReleased
 
     //вызывается при отправке сообщения
     private void pushMessage() {
         if (!jTextArea1.getText().isEmpty() && canPrint) { //если пользователь что-то ввел
-            chatModel.messages.add(new UserMessage(jTextArea1.getText())); //добавляем в таблицу сообщения
-            //Timer
-            //jLabel5.setText("Печатаю...");
-            //Timer
-            chatModel.messages.add(new BotMessage(jTextArea1.getText()));
+            if (canPrint) {
+                currentText = jTextArea1.getText();
+                chatModel.messages.add(new UserMessage(currentText)); //добавляем в таблицу сообщения
+                jTextArea1.setText("");
+                chatModel.fireTableDataChanged();
+                jTable1.scrollRectToVisible(getRowBounds(jTable1, jTable1.getRowCount()-1)); //автоскролл
+                
+                jLabel5.setText(getRandomMindPhrase());
+                t1 = new Timer(currentText.length()*300, taskPerformer);
+                t1.setRepeats(false);
+                t1.start();
+                
+            }
+            canPrint = false;
+            
+        }
+    }
+        
+    //область, для автоскролла
+    private Rectangle getRowBounds(JTable table, int row)
+    {
+        Rectangle result = table.getCellRect(row, -1, true);
+        Insets i = table.getInsets();
 
-            jTextArea1.setText("");                     //обновляем поле ввода
+        result.x = i.left;
+        result.width = table.getWidth() - i.left - i.right;
+
+        return result;
+    }
+    
+    //фразы, когда бот пишет
+    private String getRandomMindPhrase(){
+        String[] a = {"Думаю...", "Анализирую...", "Генирирую...", "Ловлю мысль...", "Создаю...", "Придумываю...", "Сканирую..."};
+        
+        Random r = new Random();
+        return a[r.nextInt(a.length)];
+    }
+    
+    //ответ бота
+    ActionListener taskPerformer = new ActionListener() {
+        public void actionPerformed(ActionEvent evt) {
+            jLabel5.setText("");
+            chatModel.messages.add(new BotMessage(currentText));
             chatModel.fireTableDataChanged();           //обновляем таблицу
             jSlider1.setValue(rating);                  //обновляет "настроение"
-            jLabel4.setText(Integer.toString(rating));  //
-            //
+            jLabel4.setText(Integer.toString(rating));
+            verifyRating();
+            jTable1.scrollRectToVisible(getRowBounds(jTable1, jTable1.getRowCount()-1)); //автоскролл
+            canPrint = true;
+        }
+    };
+    
+    private void verifyRating(){
+        if (rating <= 8){
+            int ch = JOptionPane.showConfirmDialog(null, "Вы совсем обидели бота! Как не стыдно! Вернетесь, когда подумайте, КАК нужно общаться!", "Бот обиделся", JOptionPane.WARNING_MESSAGE);
+            if (ch == 0 || ch == 2)
+                System.exit(0);
         }
     }
 
@@ -257,7 +289,7 @@ public final class Bot extends javax.swing.JFrame {
         for (int i = 0; i < 3; i++) {
             column = jTable1.getColumnModel().getColumn(i);
             if (i == 1) {
-                column.setPreferredWidth(350); //колонка с сообщениями - самая широкая
+                column.setPreferredWidth(450); //колонка с сообщениями - самая широкая
             } else {
                 column.setPreferredWidth(50);
             }
