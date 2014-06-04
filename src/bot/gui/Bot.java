@@ -12,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import static java.awt.event.KeyEvent.VK_ENTER;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.Timer;
@@ -29,10 +31,10 @@ public final class Bot extends javax.swing.JFrame {
     public static int rating = 50;      //"настроение" бота
 
     String currentText;
-    
+
     Timer t1;
     boolean canPrint;
-    
+
     /**
      * Creates new form Bot
      */
@@ -47,11 +49,11 @@ public final class Bot extends javax.swing.JFrame {
         canPrint = true;
 
         generator = new Generator();
-        
+
         chatModel.messages.add(new BotMessage("11/11")); //стартовые сообщения
         chatModel.messages.add(new BotMessage("22/22"));
         chatModel.fireTableDataChanged();
-        
+
     }
 
     /**
@@ -226,25 +228,27 @@ public final class Bot extends javax.swing.JFrame {
         if (!jTextArea1.getText().isEmpty() && canPrint) { //если пользователь что-то ввел
             if (canPrint) {
                 currentText = jTextArea1.getText();
-                chatModel.messages.add(new UserMessage(currentText)); //добавляем в таблицу сообщения
                 jTextArea1.setText("");
+                jTable1.scrollRectToVisible(getRowBounds(jTable1, jTable1.getRowCount() - 1)); //автоскролл
+                chatModel.messages.add(new UserMessage(currentText)); //добавляем в таблицу сообщения
                 chatModel.fireTableDataChanged();
-                jTable1.scrollRectToVisible(getRowBounds(jTable1, jTable1.getRowCount()-1)); //автоскролл
-                
                 jLabel5.setText(getRandomMindPhrase());
-                t1 = new Timer(currentText.length()*300, taskPerformer);
+
+                jSlider1.setValue(rating);                  //обновляет "настроение"
+                jLabel4.setText(Integer.toString(rating));
+                verifyRating();
+
+                t1 = new Timer(currentText.length() * 300, taskPerformer);
                 t1.setRepeats(false);
                 t1.start();
-                
             }
             canPrint = false;
-            
+
         }
     }
-        
+
     //область, для автоскролла
-    private Rectangle getRowBounds(JTable table, int row)
-    {
+    private Rectangle getRowBounds(JTable table, int row) {
         Rectangle result = table.getCellRect(row, -1, true);
         Insets i = table.getInsets();
 
@@ -253,34 +257,35 @@ public final class Bot extends javax.swing.JFrame {
 
         return result;
     }
-    
+
     //фразы, когда бот пишет
-    private String getRandomMindPhrase(){
+    private String getRandomMindPhrase() {
         String[] a = {"Думаю...", "Анализирую...", "Генирирую...", "Ловлю мысль...", "Создаю...", "Придумываю...", "Сканирую..."};
-        
+
         Random r = new Random();
         return a[r.nextInt(a.length)];
     }
-    
+
     //ответ бота
     ActionListener taskPerformer = new ActionListener() {
         public void actionPerformed(ActionEvent evt) {
             jLabel5.setText("");
-            chatModel.messages.add(new BotMessage(currentText));
+
             chatModel.fireTableDataChanged();           //обновляем таблицу
-            jSlider1.setValue(rating);                  //обновляет "настроение"
-            jLabel4.setText(Integer.toString(rating));
-            verifyRating();
-            jTable1.scrollRectToVisible(getRowBounds(jTable1, jTable1.getRowCount()-1)); //автоскролл
+
+            chatModel.messages.add(new BotMessage(currentText));
+            
+            jTable1.scrollRectToVisible(getRowBounds(jTable1, jTable1.getRowCount() - 1)); //автоскролл
             canPrint = true;
         }
     };
-    
-    private void verifyRating(){
-        if (rating <= 8){
+
+    private void verifyRating() {
+        if (rating <= 8) {
             int ch = JOptionPane.showConfirmDialog(null, "Вы совсем обидели бота! Как не стыдно! Вернетесь, когда подумайте, КАК нужно общаться!", "Бот обиделся", JOptionPane.WARNING_MESSAGE);
-            if (ch == 0 || ch == 2)
+            if (ch == 0 || ch == 2) {
                 System.exit(0);
+            }
         }
     }
 
